@@ -16,7 +16,7 @@ def save_db_to_file(db, filename):
 def load_db_from_file(filename):
     try:
         with open(filename, 'r') as file:
-            print(f'Database loaded: {db}')
+            print(f'Database loaded')
             return json.load(file)
     except FileNotFoundError:
         print(f"No such file: {filename}")
@@ -27,10 +27,9 @@ def load_db_from_file(filename):
 AUTH0_DOMAIN = 'dev-zl27wopcwlh36x66.us.auth0.com'  # Replace with your Auth0 domain
 CLIENT_ID = 'QWPwOiVJ0K4OkUkhv9U4gpYmhMVWTOcC'  # Replace with your Auth0 application's client ID
 
-db = {}
-
 # Function to add a user
-def add_user(name, email, token):
+
+def add_user(db, name, email, token):
     if email in db:
         print("User already exists.")
     else:
@@ -38,14 +37,16 @@ def add_user(name, email, token):
         print("User added.")
 
 # Function to get a user's information
-def get_user(user_id):
+def get_user(db, user_id):
     return db.get(email, "User not found.")
 
-def user_exists(email):
+
+def user_exists(db, email):
+
     return email in db
 
 # Function to delete a user
-def delete_user(email):
+def delete_user(db, email):
     if email in db:
         del db[email]
         print("User deleted.")
@@ -111,8 +112,6 @@ def create_server(host="0.0.0.0", port=443):
                 data_ip = conn.recv(1024)
                 print(f'Received from client ip: {data_ip}')
                 ip = data_ip
-                # Add to VPN environment received entry
-
                 try:
                     auth0_response = get_device_code()
                     response = f"Please go to {auth0_response['verification_uri_complete']} and enter the code: {auth0_response['user_code']}"
@@ -120,7 +119,6 @@ def create_server(host="0.0.0.0", port=443):
                     response = f'Error in Auth0 Device Authorization: {str(e)}'
 
                 conn.sendall(response.encode())
-                # print("sent everything!!!!!!!!!!!!!!!!!")
                 token_response = poll_for_token(auth0_response['device_code'])
                 access_token = token_response['access_token']
                 id_token = token_response['id_token']
@@ -132,24 +130,19 @@ def create_server(host="0.0.0.0", port=443):
                 name = decoded_token.get('name')
 
                 # check if player is in db = {}
-                #if user_exists(email):
+                #if user_exists(db, email):
                 #    # ignore entry - user already here
                 #    print("User already in here!")
                 #    # user is waiting for a response - notify login fail
                 #    conn.sendall(b'USER ALREADY IN THE SYSTEM')
                 #    conn.close()
                 #    continue
-                
-                add_user(name, email, access_token)
-                
+                add_user(db, name, email, access_token)
                 print(f'New login: {name} - {email}')
 
-                #print("Access token:", access_token)
                 process = subprocess.Popen(['/home/connection_trial/add_new_vpn_entry.sh', ip, publicKey], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 stdout, stderr = process.communicate()
 
-                #print("STDOUT:", stdout)
-                #print("STDERR:", stderr)
                 conn.sendall(b'LOGIN SUCCESFUL')
                 conn.close()
 
@@ -158,6 +151,7 @@ def create_server(host="0.0.0.0", port=443):
                     print(entry)
 
                 # save database to file
+                print(db)
                 save_db_to_file(db, "database.json")
                 break
 # Run WireGuard
