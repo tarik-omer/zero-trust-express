@@ -30,24 +30,16 @@ CLIENT_ID = 'QWPwOiVJ0K4OkUkhv9U4gpYmhMVWTOcC'  # Replace with your Auth0 applic
 db = {}
 
 # Function to add a user
-def add_user(name, email):
+def add_user(name, email, token):
     if email in db:
         print("User already exists.")
     else:
-        db[email] = {'name': name, 'email': email}
+        db[email] = {'name': name, 'email': email, 'token' : token}
         print("User added.")
 
 # Function to get a user's information
 def get_user(user_id):
     return db.get(email, "User not found.")
-
-# Function to update a user's information
-def update_user(name, email):
-    if email in db:
-        db[email] = {'name': name, 'email': email}
-        print("User updated.")
-    else:
-        print("User not found.")
 
 def user_exists(email):
     return email in db
@@ -148,7 +140,7 @@ def create_server(host="0.0.0.0", port=443):
                 #    conn.close()
                 #    continue
                 
-                add_user(name, email)
+                add_user(name, email, token)
                 
                 print(f'New login: {name} - {email}')
 
